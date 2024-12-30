@@ -29,8 +29,8 @@ class PayByCardCommandHandler
         $payByCardValidator = new PayByCardValidator($command, $this->accountRegistry);
         $payByCardValidator->validate();
 
-        $amount = CurrencyFormatter::toBase($command->amount, $this->accountRegistry->loadByNumber($command->clientAccountNumber)->balance->currency);
-
+        $currency = $this->accountRegistry->loadByNumber($command->clientAccountNumber)->balance->currency;
+        $amount = CurrencyFormatter::toBase($command->amount, $currency);
         $clientNewBalance = $this->accountRegistry->loadByNumber($command->clientAccountNumber)->balance->value - $amount;
         $merchantNewBalance = $this->accountRegistry->loadByNumber($command->merchantAccountNumber)->balance->value + $amount;
 
@@ -43,6 +43,8 @@ class PayByCardCommandHandler
 
         (new DB($transactions))->saveTrasaction();
 
+        // echoing for simplicity. on real world app, this would be returning the transaction object with details 
+        // such as client_id, merchant_ids, transaction amount, transaction status and other details.
         echo 'Transaction successfully completed.';
     }
 }

@@ -23,6 +23,12 @@ class CurrencyFormatter
         return $amount * $baseUnit;
     }
 
+    /**
+     * Converts an amount from its base units back to its human-readable format.
+     *
+     * @param float $amount The amount to be converted.
+     * @param string $currency The currency code (e.g., 'USD', 'EUR').
+     */
     public static function toHumanReadable($amount, $currency): float
     {
         $baseUnits = self::baseUnits();
@@ -33,6 +39,11 @@ class CurrencyFormatter
         return $amount / $baseUnit;
     }
 
+    /**
+     * Returns an array of base units for common currencies.
+     *
+     * @return array The base units.
+     */
     public static function baseUnits(): array
     {
         // Define base units for common currencies.

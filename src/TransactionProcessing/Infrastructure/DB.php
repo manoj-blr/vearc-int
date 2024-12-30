@@ -20,8 +20,6 @@ class DB
         $this->transactionLog = $transactionLog;
     }
 
-
-
     public function saveTrasaction()
     {
         switch ($this->database) {

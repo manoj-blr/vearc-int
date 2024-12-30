@@ -15,6 +15,9 @@ class PayByCardValidator
         private AccountRegistry  $accountRegistry,
     ) {}
 
+    /**
+     * Validate before processing the payment. Validations are performed in the order.
+     */
     public function validate()
     {
         $this->validateAccountsExist()
@@ -40,6 +43,10 @@ class PayByCardValidator
         return $this;
     }
 
+    /**
+     * Validate that the amount is greater than zero.
+     * Throw an exception if the amount is not greater than zero.
+     */
     private function validateAmount(): self|\InvalidArgumentException
     {
         if ($this->command->amount <= 0) {
@@ -49,6 +56,10 @@ class PayByCardValidator
         return $this;
     }
 
+    /**
+     * Validate that the currency matches the currency of the client and merchant accounts.
+     * Throw an exception if the currency does not match.
+     */
     private function validateCurrency(): self|\InvalidArgumentException
     {
         $currencies = [
@@ -64,6 +75,10 @@ class PayByCardValidator
         return $this;
     }
 
+    /**
+     * Validate that the client has sufficient balance for the transaction.
+     * Throw an exception if the client does not have sufficient balance.
+     */
     private function validateClientSufficientBalance(): self|ClientSufficientBalanceException
     {
         $amount = CurrencyFormatter::toBase($this->command->amount, $this->accountRegistry->loadByNumber($this->command->clientAccountNumber)->balance->currency);
