@@ -2,25 +2,30 @@
 
 namespace Skaleet\Interview\TransactionProcessing\Infrastructure;
 
-use Skaleet\Interview\TransactionProcessing\Domain\Model\TransactionLog;
+use Skaleet\Interview\TransactionProcessing\Domain\Exception\AccountDoesNotExistException;
 use Skaleet\Interview\TransactionProcessing\Domain\Exception\InvalidDatabaseException;
+use Skaleet\Interview\TransactionProcessing\Domain\Model\TransactionLog;
 
 class DB
 {
-    private $database = null;    //in-memory, persistent,  mysql, etc
-    private $transactionLog = null;
-    const DB_IN_MEMORY = 'in-memory';
+    const DB_IN_MEMORY = 'in-memory';    //in-memory, persistent,  mysql, etc
     const DB_MYSQL = 'mysql';
     const DB_PERSISTENT = 'persistent';
+    private ?string $database = null;
+    private ?TransactionLog $transactionLog = null;
 
     public function __construct(TransactionLog $transactionLog)
     {
-        // $this->database = 'in-memory';  // could be fetched from configuration. ex - from .env file.
-        $this->database = 'persistent';  // could be fetched from configuration. ex - from .env file.
+//        $this->database = 'in-memory';  // could be fetched from configuration. ex - from .env file.
+         $this->database = 'persistent';  // could be fetched from configuration. ex - from .env file.
         $this->transactionLog = $transactionLog;
     }
 
-    public function saveTrasaction()
+    /**
+     * @throws AccountDoesNotExistException
+     * @throws InvalidDatabaseException
+     */
+    public function saveTrasaction(): void
     {
         switch ($this->database) {
             case self::DB_IN_MEMORY:
@@ -37,26 +42,26 @@ class DB
         }
     }
 
-    private function saveInMemoryTransaction()
+    /**
+     * Save transactions to In Memory
+     * @throws AccountDoesNotExistException
+     */
+    private function saveInMemoryTransaction(): void
     {
-        try {
-            $data = unserialize(file_get_contents('db'));
-            $inMemory = new InMemoryDatabase($data->getAccounts(), $data->getTransactions());
-            $inMemory->add($this->transactionLog);
-        } catch (\Exception $ex) {
-            throw $ex->getMessage();
-        }
+        $data = unserialize(file_get_contents('db'));
+        $inMemory = new InMemoryDatabase($data->getAccounts(), $data->getTransactions());
+        $inMemory->add($this->transactionLog);
     }
 
-    private function savePersistentTransaction()
+    /**
+     * Save transactions to Persistent DB
+     * @throws AccountDoesNotExistException
+     */
+    private function savePersistentTransaction(): void
     {
-        try {
-            $data = unserialize(file_get_contents('db'));
-            $persistent = new PersistentDatabase($data->getAccounts(), $data->getTransactions());
-            $persistent->add($this->transactionLog);
-        } catch (\Exception $ex) {
-            throw $ex->getMessage();
-        }
+        $data = unserialize(file_get_contents('db'));
+        $persistent = new PersistentDatabase($data->getAccounts(), $data->getTransactions());
+        $persistent->add($this->transactionLog);
     }
 
     private function saveMySQLTransaction()

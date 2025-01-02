@@ -1,1 +1,1 @@
-{"version":1,"defects":[],"times":{"Skaleet\\Interview\\Tests\\MyTest::testMe":0.002,"Skaleet\\Interview\\Tests\\TransactionProcessing\\UseCase\\PayByCardCommandHandlerTest::test_account_does_not_exists_exception":0.004}}
+{"version":1,"defects":[],"times":{"Skaleet\\Interview\\Tests\\MyTest::testMe":0.002,"Skaleet\\Interview\\Tests\\TransactionProcessing\\UseCase\\PayByCardCommandHandlerTest::test_account_does_not_exists_exception":0.006}}

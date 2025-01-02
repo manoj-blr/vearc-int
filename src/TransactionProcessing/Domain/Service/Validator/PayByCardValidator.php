@@ -1,6 +1,7 @@
 <?php
 
-namespace Skaleet\Interview\TransactionProcessing\UseCase\Validator;
+namespace Skaleet\Interview\TransactionProcessing\Domain\Service\Validator;
+
 
 use Skaleet\Interview\TransactionProcessing\Domain\AccountRegistry;
 use Skaleet\Interview\TransactionProcessing\UseCase\PayByCardCommand;
@@ -13,7 +14,9 @@ class PayByCardValidator
     public function __construct(
         private PayByCardCommand $command,
         private AccountRegistry  $accountRegistry,
-    ) {}
+    )
+    {
+    }
 
     /**
      * Validate before processing the payment. Validations are performed in the order.

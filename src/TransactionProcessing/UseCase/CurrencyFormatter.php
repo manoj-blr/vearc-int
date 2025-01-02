@@ -10,14 +10,14 @@ class CurrencyFormatter
      *
      * @param float $amount The amount to be converted.
      * @param string $currency The currency code (e.g., 'USD', 'EUR').
-     * @return float The amount in base units.
+     * @return int The amount in base units.
      */
-    public static function toBase($amount, $currency): int
+    public static function toBase(float $amount, string $currency): int
     {
 
         $baseUnits = self::baseUnits();
         // Get the base unit for the given currency
-        $baseUnit = isset($baseUnits[$currency]) ? $baseUnits[$currency] : 1;
+        $baseUnit = $baseUnits[$currency] ?? 1;
 
         // Convert the amount to base units
         return $amount * $baseUnit;
@@ -29,13 +29,13 @@ class CurrencyFormatter
      * @param float $amount The amount to be converted.
      * @param string $currency The currency code (e.g., 'USD', 'EUR').
      */
-    public static function toHumanReadable($amount, $currency): float
+    public static function toHumanReadable(float $amount, string $currency): float
     {
         $baseUnits = self::baseUnits();
         // Get the base unit for the given currency
-        $baseUnit = isset($baseUnits[$currency]) ? $baseUnits[$currency] : 1;
+        $baseUnit = $baseUnits[$currency] ?? 1;
 
-        // Convert the amount to human readable
+        // Convert the amount to human-readable
         return $amount / $baseUnit;
     }
 
@@ -47,7 +47,7 @@ class CurrencyFormatter
     public static function baseUnits(): array
     {
         // Define base units for common currencies.
-        // Could be fetched from Databse, API, JSON.
+        // Could be fetched from Database, API, JSON.
         return $baseUnits = [
             'USD' => 100, // 1 USD = 100 cents
             'EUR' => 100, // 1 EUR = 100 cents
