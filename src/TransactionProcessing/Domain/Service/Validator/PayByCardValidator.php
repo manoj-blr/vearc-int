@@ -20,6 +20,8 @@ class PayByCardValidator
 
     /**
      * Validate before processing the payment. Validations are performed in the order.
+     * Each validations throw exceptions on failure. Thus early existing the code flow.
+     * The handler/controller gets executed only if the validations pass.
      */
     public function validate()
     {
