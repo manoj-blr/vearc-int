@@ -1,6 +1,6 @@
 <?php
 
-namespace Skaleet\Interview\TransactionProcessing\UseCase;
+namespace Skaleet\Interview\TransactionProcessing\Domain\Service;
 
 class CurrencyFormatter
 {

@@ -4,17 +4,14 @@ namespace Skaleet\Interview\TransactionProcessing\Domain\Service\Validator;
 
 
 use Skaleet\Interview\TransactionProcessing\Domain\AccountRegistry;
-use Skaleet\Interview\TransactionProcessing\UseCase\PayByCardCommand;
-use Skaleet\Interview\TransactionProcessing\UseCase\CurrencyFormatter;
 use Skaleet\Interview\TransactionProcessing\Domain\Exception\AccountDoesNotExistException;
 use Skaleet\Interview\TransactionProcessing\Domain\Exception\ClientSufficientBalanceException;
+use Skaleet\Interview\TransactionProcessing\Domain\Service\CurrencyFormatter;
+use Skaleet\Interview\TransactionProcessing\UseCase\PayByCardCommand;
 
 class PayByCardValidator
 {
-    public function __construct(
-        private PayByCardCommand $command,
-        private AccountRegistry  $accountRegistry,
-    )
+    public function __construct(private PayByCardCommand $command, private AccountRegistry $accountRegistry)
     {
     }
 
@@ -25,24 +22,36 @@ class PayByCardValidator
      */
     public function validate()
     {
-        $this->validateAccountsExist()
-            ->validateAmount()
-            ->validateCurrency()
-            ->validateClientSufficientBalance();
+        $this->validateAccountsExist()->validateAmount()->validateCurrency()->validateClientSufficientBalance();
     }
 
     /**
-     * Validate whether the client and merchant account exists or not.
-     * Throw an exception if either the client or merchant account does not exist.
+     * Validate that the client has sufficient balance for the transaction.
+     * Throw an exception if the client does not have sufficient balance.
+     * @throws ClientSufficientBalanceException
      */
-    private function validateAccountsExist(): self|AccountDoesNotExistException
+    private function validateClientSufficientBalance(): self|ClientSufficientBalanceException
     {
-        if ($this->accountRegistry->loadByNumber($this->command->clientAccountNumber) === null) {
-            throw new AccountDoesNotExistException($this->command->clientAccountNumber);
+        $amount = CurrencyFormatter::toBase($this->command->amount, $this->accountRegistry->loadByNumber($this->command->clientAccountNumber)->balance->currency);
+        $clientAccountBalance = $this->accountRegistry->loadByNumber($this->command->clientAccountNumber)->balance->value;
+
+        if ($clientAccountBalance < $amount) {
+            throw new ClientSufficientBalanceException();
         }
 
-        if ($this->accountRegistry->loadByNumber($this->command->merchantAccountNumber) === null) {
-            throw new AccountDoesNotExistException($this->command->merchantAccountNumber);
+        return $this;
+    }
+
+    /**
+     * Validate that the currency matches the currency of the client and merchant accounts.
+     * Throw an exception if the currency does not match.
+     */
+    private function validateCurrency(): self|\InvalidArgumentException
+    {
+        $currencies = [$this->command->currency, $this->accountRegistry->loadByNumber($this->command->clientAccountNumber)->balance->currency, $this->accountRegistry->loadByNumber($this->command->merchantAccountNumber)->balance->currency];
+
+        if (count(array_unique($currencies)) > 1) {
+            throw new \InvalidArgumentException("Mismatch in transaction currency.");
         }
 
         return $this;
@@ -62,35 +71,18 @@ class PayByCardValidator
     }
 
     /**
-     * Validate that the currency matches the currency of the client and merchant accounts.
-     * Throw an exception if the currency does not match.
+     * Validate whether the client and merchant account exists or not.
+     * Throw an exception if either the client or merchant account does not exist.
+     * @throws AccountDoesNotExistException
      */
-    private function validateCurrency(): self|\InvalidArgumentException
+    private function validateAccountsExist(): self|AccountDoesNotExistException
     {
-        $currencies = [
-            $this->command->currency,
-            $this->accountRegistry->loadByNumber($this->command->clientAccountNumber)->balance->currency,
-            $this->accountRegistry->loadByNumber($this->command->merchantAccountNumber)->balance->currency
-        ];
-
-        if (count(array_unique($currencies)) > 1) {
-            throw new \InvalidArgumentException("Mismatch in transaction currency.");
+        if ($this->accountRegistry->loadByNumber($this->command->clientAccountNumber) === null) {
+            throw new AccountDoesNotExistException($this->command->clientAccountNumber);
         }
 
-        return $this;
-    }
-
-    /**
-     * Validate that the client has sufficient balance for the transaction.
-     * Throw an exception if the client does not have sufficient balance.
-     */
-    private function validateClientSufficientBalance(): self|ClientSufficientBalanceException
-    {
-        $amount = CurrencyFormatter::toBase($this->command->amount, $this->accountRegistry->loadByNumber($this->command->clientAccountNumber)->balance->currency);
-        $clientAccountBalance = $this->accountRegistry->loadByNumber($this->command->clientAccountNumber)->balance->value;
-
-        if ($clientAccountBalance < $amount) {
-            throw new ClientSufficientBalanceException();
+        if ($this->accountRegistry->loadByNumber($this->command->merchantAccountNumber) === null) {
+            throw new AccountDoesNotExistException($this->command->merchantAccountNumber);
         }
 
         return $this;

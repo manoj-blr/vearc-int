@@ -9,6 +9,7 @@ use Skaleet\Interview\TransactionProcessing\Domain\Exception\InvalidDatabaseExce
 use Skaleet\Interview\TransactionProcessing\Domain\Model\AccountingEntry;
 use Skaleet\Interview\TransactionProcessing\Domain\Model\Amount;
 use Skaleet\Interview\TransactionProcessing\Domain\Model\TransactionLog;
+use Skaleet\Interview\TransactionProcessing\Domain\Service\CurrencyFormatter;
 use Skaleet\Interview\TransactionProcessing\Domain\Service\Validator\PayByCardValidator;
 use Skaleet\Interview\TransactionProcessing\Domain\TransactionRepository;
 
@@ -20,10 +21,6 @@ class PayByCardCommandHandler
     }
 
 
-    /**
-     * @throws AccountDoesNotExistException
-     * @throws InvalidDatabaseException
-     */
     public function handle(PayByCardCommand $command): void
     {
 
@@ -44,16 +41,9 @@ class PayByCardCommandHandler
 
         $this->transactionRepository->add($transactions);
 
-//        dd(
-//            'client - before transaction: '.$clientBalance,
-//            'client - after transaction: '.$clientNewBalance,
-//            'merchant - before transaction: '.$merchantBalance,
-//            'merchant - after transaction: '.$merchantNewBalance
-//        );
-
 
         // Implementation for generic multiple databases.
-//        (new DB($transactions))->saveTrasaction();
+        // (new DB($transactions))->saveTrasaction();
 
 
         // echoing for simplicity. on real world app, this would be returning the transaction object with details
