@@ -5,13 +5,13 @@ namespace Skaleet\Interview\TransactionProcessing\UseCase;
 use DateTimeImmutable;
 use Skaleet\Interview\TransactionProcessing\Domain\AccountRegistry;
 use Skaleet\Interview\TransactionProcessing\Domain\Exception\AccountDoesNotExistException;
-use Skaleet\Interview\TransactionProcessing\Domain\Exception\InvalidDatabaseException;
+use Skaleet\Interview\TransactionProcessing\Domain\Exception\ClientSufficientBalanceException;
 use Skaleet\Interview\TransactionProcessing\Domain\Model\AccountingEntry;
 use Skaleet\Interview\TransactionProcessing\Domain\Model\Amount;
 use Skaleet\Interview\TransactionProcessing\Domain\Model\TransactionLog;
 use Skaleet\Interview\TransactionProcessing\Domain\Service\CurrencyFormatter;
-use Skaleet\Interview\TransactionProcessing\Domain\Service\Validator\PayByCardValidator;
 use Skaleet\Interview\TransactionProcessing\Domain\TransactionRepository;
+use Skaleet\Interview\TransactionProcessing\UseCase\Validator\PayByCardValidator;
 
 class PayByCardCommandHandler
 {
@@ -21,17 +21,20 @@ class PayByCardCommandHandler
     }
 
 
+    /**
+     * @throws AccountDoesNotExistException
+     * @throws ClientSufficientBalanceException
+     */
     public function handle(PayByCardCommand $command): void
     {
 
         $payByCardValidator = new PayByCardValidator($command, $this->accountRegistry);
-        $payByCardValidator->validate();
+        $transactionDetails = $payByCardValidator->validate();
 
-        $currency = $this->accountRegistry->loadByNumber($command->clientAccountNumber)->balance->currency;
-        $amount = CurrencyFormatter::toBase($command->amount, $currency);
+        $amount = CurrencyFormatter::toBase($command->amount, $command->currency);
 
-        $clientBalance = $this->accountRegistry->loadByNumber($command->clientAccountNumber)->balance->value;
-        $merchantBalance = $this->accountRegistry->loadByNumber($command->merchantAccountNumber)->balance->value;
+        $clientBalance = $transactionDetails['clientAccount']->balance->value;
+        $merchantBalance = $transactionDetails['merchantAccount']->balance->value;
         $clientNewBalance = $clientBalance - $amount;
         $merchantNewBalance = $merchantBalance + $amount;
 
@@ -41,15 +44,9 @@ class PayByCardCommandHandler
 
         $this->transactionRepository->add($transactions);
 
-
-        // Implementation for generic multiple databases.
-        // (new DB($transactions))->saveTrasaction();
-
-
         // echoing for simplicity. on real world app, this would be returning the transaction object with details
         // such as client_id, merchant_ids, transaction amount, transaction status and other details.
         echo 'Transaction successfully completed.';
-
 
     }
 }

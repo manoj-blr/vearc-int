@@ -1,6 +1,6 @@
 <?php
 
-namespace Skaleet\Interview\TransactionProcessing\Domain\Service\Validator;
+namespace Skaleet\Interview\TransactionProcessing\UseCase\Validator;
 
 
 use Skaleet\Interview\TransactionProcessing\Domain\AccountRegistry;
@@ -11,6 +11,9 @@ use Skaleet\Interview\TransactionProcessing\UseCase\PayByCardCommand;
 
 class PayByCardValidator
 {
+
+    private $transactionDetails = [];
+
     public function __construct(private PayByCardCommand $command, private AccountRegistry $accountRegistry)
     {
     }
@@ -19,10 +22,14 @@ class PayByCardValidator
      * Validate before processing the payment. Validations are performed in the order.
      * Each validations throw exceptions on failure. Thus early existing the code flow.
      * The handler/controller gets executed only if the validations pass.
+     * @throws AccountDoesNotExistException
+     * @throws ClientSufficientBalanceException
      */
-    public function validate()
+    public function validate(): array
     {
         $this->validateAccountsExist()->validateAmount()->validateCurrency()->validateClientSufficientBalance();
+        return $this->transactionDetails;
+
     }
 
     /**
@@ -48,7 +55,9 @@ class PayByCardValidator
      */
     private function validateCurrency(): self|\InvalidArgumentException
     {
-        $currencies = [$this->command->currency, $this->accountRegistry->loadByNumber($this->command->clientAccountNumber)->balance->currency, $this->accountRegistry->loadByNumber($this->command->merchantAccountNumber)->balance->currency];
+
+
+        $currencies = [$this->command->currency, $this->transactionDetails['clientAccount']->balance->currency, $this->transactionDetails['merchantAccount']->balance->currency];
 
         if (count(array_unique($currencies)) > 1) {
             throw new \InvalidArgumentException("Mismatch in transaction currency.");
@@ -72,18 +81,24 @@ class PayByCardValidator
 
     /**
      * Validate whether the client and merchant account exists or not.
+     * If the account exists add client and merchant account details to transactionDetails array
      * Throw an exception if either the client or merchant account does not exist.
      * @throws AccountDoesNotExistException
      */
     private function validateAccountsExist(): self|AccountDoesNotExistException
     {
-        if ($this->accountRegistry->loadByNumber($this->command->clientAccountNumber) === null) {
+        $clientAccount = $this->accountRegistry->loadByNumber($this->command->clientAccountNumber);
+        $merchantAccount = $this->accountRegistry->loadByNumber($this->command->merchantAccountNumber);
+        if ($clientAccount === null) {
             throw new AccountDoesNotExistException($this->command->clientAccountNumber);
         }
 
-        if ($this->accountRegistry->loadByNumber($this->command->merchantAccountNumber) === null) {
+        if ($merchantAccount === null) {
             throw new AccountDoesNotExistException($this->command->merchantAccountNumber);
         }
+
+        $this->transactionDetails['clientAccount'] = $clientAccount;
+        $this->transactionDetails['merchantAccount'] = $merchantAccount;
 
         return $this;
     }
