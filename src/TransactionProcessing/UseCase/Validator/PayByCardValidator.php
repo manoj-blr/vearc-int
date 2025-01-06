@@ -27,7 +27,10 @@ class PayByCardValidator
      */
     public function validate(): array
     {
-        $this->validateAccountsExist()->validateAmount()->validateCurrency()->validateClientSufficientBalance();
+        $this->validateAccountsExist()
+            ->validateAmount()
+            ->validateCurrency()
+            ->validateClientSufficientBalance();
         return $this->transactionDetails;
 
     }
@@ -39,8 +42,8 @@ class PayByCardValidator
      */
     private function validateClientSufficientBalance(): self|ClientSufficientBalanceException
     {
-        $amount = CurrencyFormatter::toBase($this->command->amount, $this->accountRegistry->loadByNumber($this->command->clientAccountNumber)->balance->currency);
-        $clientAccountBalance = $this->accountRegistry->loadByNumber($this->command->clientAccountNumber)->balance->value;
+        $amount = CurrencyFormatter::toBase($this->command->amount, $this->transactionDetails['clientAccount']->balance->currency);
+        $clientAccountBalance = $this->transactionDetails['clientAccount']->balance->value;
 
         if ($clientAccountBalance < $amount) {
             throw new ClientSufficientBalanceException();
